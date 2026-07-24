@@ -8,6 +8,11 @@ h1 { margin:24px 0 18px; font:900 clamp(45px,6vw,78px)/1.04 "Segoe UI","Microsof
 h1 em { color:var(--green); font-style:normal; }
 .hero p { max-width:430px; line-height:1.9; color:#53605b; }
 .panel { position:relative; background:#fff; padding:28px; border:1px solid var(--ink); box-shadow:10px 10px 0 var(--ink); }
+.dropzone { display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; margin-bottom:18px; padding:34px 20px; border:2px dashed var(--line); background:var(--paper); transition:.15s; }
+.dropzone.drag-over { border-color:var(--green); background:#eef7f2; }
+.dropzone .icon { display:grid; place-items:center; width:48px; height:48px; border:1px solid var(--ink); border-radius:8px; background:#fff; font:700 13px/1 monospace; letter-spacing:1px; }
+.dropzone strong { font-size:15px; }
+.dropzone small { color:#7a837f; font-size:12px; }
 .input-group { margin-bottom:18px; }
 .input-group label { display:block; margin-bottom:6px; font-weight:700; font-size:13px; }
 .input-group label small { font-weight:400; color:#7a837f; }
