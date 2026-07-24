@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PDF Splitter</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <span class="eyebrow">LOCAL PDF TOOL</span>
+      <h1><span>PDF Page</span><br><em>Splitter</em></h1>
+      <p>Split a multi-page PDF into individual single-page files. Files are processed only on this computer.</p>
+    </section>
+
+    <section class="panel">
+      <div class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept=".pdf" hidden>
+        <span class="icon">PDF</span>
+        <strong id="fileName">Drag a PDF file here</strong>
+        <small>Each page will be saved as a separate PDF file.</small>
+        <button id="uploadBtn" class="upload-btn" type="button">Choose File</button>
+      </div>
+
+      <div class="input-group" id="outputGroup">
+        <label>Output Folder <small>(optional — leave blank for temp folder)</small></label>
+        <div class="file-row">
+          <input type="text" id="outputPath" placeholder="e.g. C:\Documents\Output">
+        </div>
+      </div>
+
+      <button id="splitBtn" class="action-btn" type="button" disabled>Split PDF</button>
+
+      <div id="progressBox" class="progress-box hidden">
+        <div class="progress-head">
+          <strong id="message">Ready</strong>
+          <span id="percent">0%</span>
+        </div>
+        <div class="track"><div id="bar"></div></div>
+        <div class="time-stats">
+          <div><small>Elapsed</small><strong id="elapsed">00:00</strong></div>
+          <div><small>Pages</small><strong id="pageCount">--</strong></div>
+          <div><small>Status</small><strong id="status">--</strong></div>
+        </div>
+      </div>
+
+      <div id="result" class="result hidden">
+        <span class="check">&#10003;</span>
+        <div>
+          <strong>Split complete</strong>
+          <p id="summary"></p>
+        </div>
+        <p id="savedDir"></p>
+      </div>
+      <p id="error" class="error hidden"></p>
+    </section>
+  </main>
+  <footer>Uses PyMuPDF for fast, lossless PDF page extraction. Each page is saved as an independent PDF.</footer>
+  <script src="/static/app.js"></script>
+</body>
+</html>

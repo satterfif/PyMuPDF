@@ -6,3 +6,5 @@ build/
 demo/README.rst
 docs/build
 docs/_build
+
+.compound-engineering/*.local.yaml
