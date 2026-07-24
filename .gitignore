@@ -8,3 +8,7 @@ docs/build
 docs/_build
 
 .compound-engineering/*.local.yaml
+
+# PDF Splitter test/run output (the exe and GUI write split pages next to themselves)
+release/PDFSplitter-Portable/page_*.pdf
+release/PDFSplitter-Portable/*/
