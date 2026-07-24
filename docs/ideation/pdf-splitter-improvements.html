@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDF Splitter — Ideation</title>
+<style>
+:root { --ink: #1a1a2e; --bg: #fafafa; --accent: #176b54; --accent-light: #e8f5e9; --border: #e0e0e0; --muted: #666; --card-bg: #fff; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font: 16px/1.7 "Segoe UI", system-ui, sans-serif; color: var(--ink); background: var(--bg); padding: 2rem; max-width: 960px; margin: 0 auto; }
+h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+h2 { font-size: 1.4rem; margin: 2.5rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--accent); }
+h3 { font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
+.meta { color: var(--muted); font-size: 0.85rem; margin-bottom: 2rem; }
+.axis-tag { display: inline-block; padding: 2px 8px; font-size: 0.75rem; font-weight: 700; border-radius: 3px; background: var(--accent-light); color: var(--accent); margin-right: 6px; }
+.idea-card { background: var(--card-bg); border: 1px solid var(--border); border-left: 4px solid var(--accent); padding: 1.2rem 1.5rem; margin: 1rem 0; border-radius: 4px; }
+.idea-card h3 { margin: 0 0 0.5rem; font-size: 1.05rem; }
+.idea-card p { margin: 0.4rem 0; color: #333; font-size: 0.92rem; }
+.idea-card .rationale { color: var(--muted); font-size: 0.85rem; font-style: italic; }
+.rejected { opacity: 0.55; border-left-color: #ccc; }
+.rejected h3::after { content: " ✗ rejected"; font-size: 0.75rem; color: #b71c1c; font-weight: 400; margin-left: 8px; }
+table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+th, td { padding: 8px 12px; border: 1px solid var(--border); text-align: left; }
+th { background: var(--accent-light); font-weight: 700; }
+.priority-high { color: #b71c1c; font-weight: 700; }
+.priority-med { color: #e65100; font-weight: 700; }
+.priority-low { color: var(--muted); }
+summary { cursor: pointer; font-weight: 600; margin: 1rem 0 0.5rem; }
+details { margin-bottom: 1rem; }
+</style>
+</head>
+<body>
+
+<h1>PDF Splitter — Improvement Ideas</h1>
+<p class="meta">Generated 2026-07-24 · Focus: PDF Splitter CLI + GUI · Axes: split modes, CLI ergonomics, GUI capabilities, automation integration</p>
+
+<h2>Grounding Context</h2>
+<p><strong>Current state:</strong> A 117-line CLI (<code>pdf_splitter_cli.py</code>) that splits PDFs into one-page-per-file using PyMuPDF's <code>insert_pdf()</code>. A Flask testing GUI with drag-and-drop upload and job polling. A 27MB portable .exe for Power Automate Desktop. 4 unit tests.</p>
+
+<p><strong>Topic axes:</strong></p>
+<table>
+<tr><th>Axis</th><th>Scope</th></tr>
+<tr><td>Split modes</td><td>Strategies beyond one-page-per-file</td></tr>
+<tr><td>CLI ergonomics</td><td>Arguments, progress, naming, batch</td></tr>
+<tr><td>GUI capabilities</td><td>UX, desktop mode, visual tools</td></tr>
+<tr><td>Automation integration</td><td>Power Automate, exit codes, structured output</td></tr>
+</table>
+
+<h2>Top Ideas (Ranked)</h2>
+
+<div class="idea-card">
+<h3>1. Split by page ranges</h3>
+<span class="axis-tag">split modes</span><span class="axis-tag">CLI ergonomics</span>
+<p>Add <code>--pages "1-5, 8, 10-15"</code> to extract specific pages or ranges into a single output PDF. This is the #1 most-requested feature across all PDF splitting tools.</p>
+<p class="rationale">PyMuPDF's <code>doc.select([page_list])</code> makes this trivial — pass a list of 0-based page indices, then save. Covers the "extract subset" use case Power Automate's built-in action already supports, making your tool competitive.</p>
+</div>
+
+<div class="idea-card">
+<h3>2. Auto-create output folder with <code>--mkdir</code> flag</h3>
+<span class="axis-tag">CLI ergonomics</span><span class="axis-tag">automation integration</span>
+<p>Add a <code>--mkdir</code> / <code>--create-dir</code> flag that creates the output directory if it doesn't exist. Keep the current "must exist" behavior as default for safety, but let automation workflows opt in.</p>
+<p class="rationale">The current "folder must already exist" requirement forces Power Automate flows to add a "Create folder" step before every split. One flag eliminates that. Low complexity, high workflow value.</p>
+</div>
+
+<div class="idea-card">
+<h3>3. Output filename templates</h3>
+<span class="axis-tag">CLI ergonomics</span><span class="axis-tag">automation integration</span>
+<p>Add <code>--name-template "{source}_{n:03d}.pdf"</code> with tokens: <code>{source}</code> (input stem), <code>{n}</code> (page number), <code>{total}</code> (page count), <code>{bookmark}</code> (nearest bookmark title). Default stays current behavior.</p>
+<p class="rationale">Enterprise users rank naming control as a top differentiator (PDFsam supports <code>[BOOKMARK_NAME]</code>, <code>[FILENUMBER]</code>). Enables downstream workflows to parse page info from filenames without a manifest.</p>
+</div>
+
+<div class="idea-card">
+<h3>4. JSON structured output mode</h3>
+<span class="axis-tag">automation integration</span><span class="axis-tag">CLI ergonomics</span>
+<p>Add <code>--json</code> flag that outputs a JSON object: <code>{"status": "ok", "input": "...", "pages": 12, "output_dir": "...", "files": [...]}</code>. Power Automate can parse this with "Convert JSON to custom object".</p>
+<p class="rationale">Current stdout is human text. Automation orchestrators need machine-parseable output. Also enables the GUI to call the CLI as a subprocess and parse results instead of reimplementing split logic.</p>
+</div>
+
+<div class="idea-card">
+<h3>5. Split by bookmarks/TOC</h3>
+<span class="axis-tag">split modes</span>
+<p>Add <code>--by-bookmarks [--level N]</code> to split at each bookmark boundary. Default to top-level (level 1). Each output file named after the bookmark title (sanitized).</p>
+<p class="rationale">PyMuPDF's <code>doc.get_toc()</code> returns <code>[(level, title, page), ...]</code>. Split at page boundaries where level ≤ N changes. Covers chapter extraction, contract section splitting, and report disaggregation — all high-value enterprise workflows.</p>
+</div>
+
+<div class="idea-card">
+<h3>6. Batch mode (multiple input files)</h3>
+<span class="axis-tag">CLI ergonomics</span><span class="axis-tag">automation integration</span>
+<p>Accept multiple positional arguments or a glob pattern: <code>PDFSplitter-CLI.exe *.pdf</code>. Process each sequentially with per-file status output. Exit code = number of failures (0 = all succeeded).</p>
+<p class="rationale">Current design requires one invocation per file. In Power Automate "For each" loops, this means N process launches. Batch mode reduces overhead for 50+ file jobs from minutes to seconds of process-start latency.</p>
+</div>
+
+<div class="idea-card">
+<h3>7. Visual page selector in GUI</h3>
+<span class="axis-tag">GUI capabilities</span>
+<p>After uploading a PDF, render page thumbnails (PyMuPDF's <code>page.get_pixmap()</code>) and let the user click to select/deselect pages before splitting. Show a grid of thumbnails with checkboxes.</p>
+<p class="rationale">Sejda and SmallPDF both differentiate on visual page selection. For a testing GUI, this makes it trivial to verify specific pages split correctly. PyMuPDF can render thumbnails at 0.2x scale in milliseconds per page.</p>
+</div>
+
+<div class="idea-card">
+<h3>8. Split every N pages</h3>
+<span class="axis-tag">split modes</span>
+<p>Add <code>--every N</code> to produce chunks of N pages each (last chunk may be shorter). Common use: split a 100-page report into 10-page sections for email attachment limits.</p>
+<p class="rationale">qpdf's <code>--split-pages=N</code> and PDFsam's "split every N pages" are heavily used. Implementation: simple loop with <code>insert_pdf(from_page=i*N, to_page=min((i+1)*N-1, total-1))</code>.</p>
+</div>
+
+<div class="idea-card">
+<h3>9. Progress reporting for large PDFs</h3>
+<span class="axis-tag">CLI ergonomics</span><span class="axis-tag">GUI capabilities</span>
+<p>Add <code>--progress</code> flag that prints <code>page N/total</code> to stderr as each page completes. GUI already has polling infrastructure — wire per-page updates into the job status.</p>
+<p class="rationale">A 500-page PDF takes seconds of silence currently. Progress prevents users from killing the process early. stderr keeps stdout clean for piping/parsing.</p>
+</div>
+
+<div class="idea-card">
+<h3>10. Granular exit codes</h3>
+<span class="axis-tag">automation integration</span>
+<p>Differentiate exit codes: 0 = success, 1 = partial failure (some pages failed), 2 = input error (file not found, not PDF), 3 = permission error, 4 = password protected. Document the codes.</p>
+<p class="rationale">Current binary 0/1 forces Power Automate flows to parse stderr for error type. Granular codes enable "If exit code = 4 then try with password" branching without text parsing.</p>
+</div>
+
+<h2>Additional Candidates</h2>
+
+<div class="idea-card">
+<h3>11. Split by blank pages (scan delimiter)</h3>
+<span class="axis-tag">split modes</span>
+<p>Detect blank pages as section delimiters in batch-scanned documents. <code>--by-blanks</code> splits before each blank page and optionally removes the blank.</p>
+<p class="rationale">Common in document scanning workflows where a blank sheet separates documents in a stack feed. PyMuPDF can detect blanks via <code>page.get_text() == ""</code> + pixmap whiteness check.</p>
+</div>
+
+<div class="idea-card">
+<h3>12. Merge mode (complement to split)</h3>
+<span class="axis-tag">split modes</span><span class="axis-tag">CLI ergonomics</span>
+<p>Add <code>--merge file1.pdf file2.pdf -o combined.pdf</code> as a complementary operation. Natural pair to split — reassemble after review/editing.</p>
+<p class="rationale">PyMuPDF's <code>insert_pdf()</code> already does this. Users who split often need to recombine subsets. Keeps the tool self-contained for round-trip workflows.</p>
+</div>
+
+<div class="idea-card">
+<h3>13. Desktop tray app (pywebview)</h3>
+<span class="axis-tag">GUI capabilities</span>
+<p>Package the Flask GUI into a pywebview desktop window (like auto-pdf-rotate). Adds native drag-and-drop, system tray icon, and eliminates browser dependency.</p>
+<p class="rationale">Follows the proven auto-pdf-rotate pattern. Makes the GUI feel like a proper tool rather than a dev testing server.</p>
+</div>
+
+<h2>Rejected Ideas (with reasons)</h2>
+
+<details>
+<summary>Show rejected ideas</summary>
+
+<div class="idea-card rejected">
+<h3>AI/LLM-guided split points</h3>
+<p>Use an LLM to decide where to split based on content semantics.</p>
+<p class="rationale">Rejected: Overkill for a local tool. Adds LLM dependency (cost, latency, API key requirement) for a niche feature. iLovePDF offers this as a cloud service — wrong fit for a portable CLI.</p>
+</div>
+
+<div class="idea-card rejected">
+<h3>Multi-language GUI (i18n)</h3>
+<p>Add zh-CN and other language support like auto-pdf-rotate.</p>
+<p class="rationale">Rejected: This is a testing GUI, not a shipped product. English-only is fine for the intended single-user developer workflow.</p>
+</div>
+
+<div class="idea-card rejected">
+<h3>Cloud/S3 streaming support</h3>
+<p>Read PDFs from and write to cloud object storage.</p>
+<p class="rationale">Rejected: The tool's value proposition is local/portable operation for Power Automate Desktop. Cloud workflows have entirely different toolchains (AWS Lambda + pdfcpu). Scope creep.</p>
+</div>
+
+<div class="idea-card rejected">
+<h3>PDF encryption/password handling</h3>
+<p>Accept a password flag to unlock protected PDFs before splitting.</p>
+<p class="rationale">Rejected for now: PyMuPDF supports <code>doc.authenticate(password)</code>, but password-protected files are explicitly rejected as an intentional safety choice. Could revisit if workflows demand it, but not a priority.</p>
+</div>
+
+<div class="idea-card rejected">
+<h3>Watch-folder daemon mode</h3>
+<p>Monitor a folder and auto-split any PDF dropped into it.</p>
+<p class="rationale">Rejected: Power Automate Desktop already provides the "watch folder → trigger action" loop. Adding a daemon duplicates the orchestrator's job and complicates the portable-exe lifecycle (start/stop/crash recovery).</p>
+</div>
+
+</details>
+
+<h2>Priority Matrix</h2>
+
+<table>
+<tr><th>Idea</th><th>Impact</th><th>Complexity</th><th>Priority</th></tr>
+<tr><td>Auto-create output folder (--mkdir)</td><td>High</td><td>Trivial</td><td class="priority-high">P0 — do first</td></tr>
+<tr><td>Split by page ranges</td><td>High</td><td>Low</td><td class="priority-high">P0</td></tr>
+<tr><td>JSON structured output</td><td>High</td><td>Low</td><td class="priority-high">P0</td></tr>
+<tr><td>Output filename templates</td><td>Med-High</td><td>Medium</td><td class="priority-med">P1</td></tr>
+<tr><td>Split every N pages</td><td>Med</td><td>Low</td><td class="priority-med">P1</td></tr>
+<tr><td>Granular exit codes</td><td>Med</td><td>Trivial</td><td class="priority-med">P1</td></tr>
+<tr><td>Progress reporting</td><td>Med</td><td>Low</td><td class="priority-med">P1</td></tr>
+<tr><td>Split by bookmarks</td><td>High</td><td>Medium</td><td class="priority-med">P1</td></tr>
+<tr><td>Batch mode</td><td>Med</td><td>Low</td><td class="priority-med">P1</td></tr>
+<tr><td>Visual page selector (GUI)</td><td>Med</td><td>Medium</td><td class="priority-low">P2</td></tr>
+<tr><td>Blank-page split</td><td>Niche</td><td>Medium</td><td class="priority-low">P2</td></tr>
+<tr><td>Merge mode</td><td>Med</td><td>Low</td><td class="priority-low">P2</td></tr>
+<tr><td>Desktop tray app</td><td>Low</td><td>High</td><td class="priority-low">P2</td></tr>
+</table>
+
+<h2>Suggested Next Step</h2>
+<p>The P0 cluster (<code>--mkdir</code>, page ranges, JSON output) can be implemented in a single session — each is ≤30 lines of code. Run <code>/ce-brainstorm</code> on any idea to define it precisely before planning, or pick one and go.</p>
+
+</body>
+</html>
