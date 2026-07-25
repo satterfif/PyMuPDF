@@ -12,3 +12,4 @@ docs/_build
 # PDF Splitter test/run output (the exe and GUI write split pages next to themselves)
 release/PDFSplitter-Portable/page_*.pdf
 release/PDFSplitter-Portable/*/
+.gstack/
