@@ -69,7 +69,14 @@ The `release/PDFSplitter-Portable/` folder ships a standalone `PDFSplitter-CLI.e
 - **ExitCode 0** = success. The PDF was split; parse the JSON on stdout for `output_dir` and `files` if the flow needs them.
 - **Any nonzero ExitCode** = failure. Route the item to a review branch. The JSON `message` field explains what went wrong.
 
-The same exit-code contract applies to the OCR merge CLI if you deploy it the same way: 0 means the page was made searchable, nonzero means a structural anomaly the flow should flag (see [reference-ocr-merge-cli.md](reference-ocr-merge-cli.md#exit-codes-and-errors)).
+### OCR Merge in Power Automate
+
+The OCR Merge CLI ships its own portable exe and setup guide, `release/OCRMerge-Portable/` (`OCRMerge-CLI.exe`, `POWER-AUTOMATE-SETUP.md`, `README.txt`). It differs from the splitter in two ways that shape the flow:
+
+- **It takes paired inputs** — a PDF *and* its OCR JSON. Your flow derives the JSON path per page (default suffix `_formatted.json`) with a `SET JsonPath` line before each run.
+- **It branches on exit code alone** — there is no `--json` result flag. Exit 0 = the page was made searchable; exit 1 = a structural anomaly and nothing was written, so route the file to review.
+
+Paste-ready flows (per-folder loop, success/failure routing, font pinning, split-then-merge) are in `release/OCRMerge-Portable/POWER-AUTOMATE-SETUP.md`. See also [reference-ocr-merge-cli.md](reference-ocr-merge-cli.md#exit-codes-and-errors) for the full exit-code and error table.
 
 ### Troubleshooting
 
