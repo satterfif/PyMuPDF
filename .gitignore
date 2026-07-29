@@ -13,3 +13,8 @@ docs/_build
 release/PDFSplitter-Portable/page_*.pdf
 release/PDFSplitter-Portable/*/
 .gstack/
+
+# Local AI-tooling scratch/state (not part of the project)
+.understand-anything/
+.compound-engineering/related.json
+.compound-engineering/*.example.yaml
