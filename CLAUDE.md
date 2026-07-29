@@ -58,6 +58,12 @@ pytest tests/test_pylint.py    # pylint
 pytest tests/test_codespell.py # codespell
 ```
 
+### Docs
+```bash
+# Build Sphinx HTML docs (run from docs/)
+sphinx-build -b html . build/html
+```
+
 ## Architecture
 
 ### Two implementations
@@ -84,6 +90,29 @@ pytest tests/test_codespell.py # codespell
 - `setup.py` (53KB) handles: MuPDF download/build, SWIG extension compilation, wheel packaging
 - `scripts/test.py` is the developer build/test orchestrator (auto-venv, build, test, cibuildwheel)
 
+### PDF Splitter tooling (`scripts/`)
+A standalone CLI tool (separate from the core binding) that splits a PDF into
+one single-page PDF per page, emitting structured JSON for automation
+(e.g. Power Automate Desktop). Not part of the built wheel.
+
+| File | Role |
+|------|------|
+| `scripts/pdf_splitter_cli.py` | CLI entry point; page-range parsing, parallel splitting |
+| `scripts/ocr_merge_cli.py` | CLI that overlays an invisible OCR text layer (Dynamics/Azure JSON) onto an image PDF to make it searchable |
+| `scripts/pdf_splitter_gui.py` | `uv`-run Flask GUI for local testing (PEP 723 inline deps) |
+| `scripts/start-splitter-gui.bat` | Windows launcher for the GUI |
+| `tests/test_pdf_splitter_cli.py` | Splitter tests (loads the CLI via `importlib`) |
+| `tests/test_ocr_merge_cli.py` | OCR merge tests (loads the CLI via `importlib`) |
+| `release/PDFSplitter-Portable/` | PyInstaller portable exe + Power Automate setup docs |
+| `docs/tooling/` | Full Diataxis docs for both CLIs (tutorial, how-tos, reference, design) |
+
+- Docs: `docs/tooling/README.md` (start there) — Diataxis tutorial/how-to/reference/explanation for both CLIs
+- Run tests: `pytest tests/test_pdf_splitter_cli.py` and `pytest tests/test_ocr_merge_cli.py`
+- Run the GUI: `scripts/start-splitter-gui.bat` (or `uv run scripts/pdf_splitter_gui.py`)
+- Uses `ThreadPoolExecutor` intentionally for I/O-bound splitting — each worker
+  opens its own doc handle. This is the documented exception to the
+  "no multithreading" rule below.
+
 ### Test conventions
 - Tests live in `tests/test_*.py`; resources in `tests/resources/`
 - Regression tests are named by issue number (e.g., `test_4936.py`)
@@ -106,7 +135,7 @@ pytest tests/test_codespell.py # codespell
 
 - `import pymupdf` is the canonical import; `import fitz` is deprecated
 - The core `src/__init__.py` is enormous (~950KB) — most PyMuPDF classes live in this single file
-- No multithreading — use multiprocessing for parallel document work
+- Core binding: no multithreading — use multiprocessing for parallel document work. (Exception: the standalone PDF Splitter CLI uses threads for I/O-bound page splitting with per-thread doc handles.)
 - `scripts/test.py` auto-creates a venv if not already inside one
 
 ## Code Style

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Searchable PDF — OCR JSON Merge — Ideation</title>
+<style>
+  :root {
+    --ink: #1a1c1f; --muted: #5b6470; --line: #e2e6 eb; --line: #e2e6eb;
+    --accent: #2f6f4f; --accent-soft: #eaf3ee; --warn: #a24; --card: #fff;
+    --bg: #f7f8fa; --code-bg: #f0f2f5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font: 16px/1.6 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink); background: var(--bg); margin: 0; padding: 0 20px 80px;
+  }
+  main { max-width: 860px; margin: 0 auto; }
+  header { padding: 48px 0 8px; }
+  h1 { font-size: 30px; line-height: 1.2; margin: 0 0 6px; letter-spacing: -0.5px; }
+  .sub { color: var(--muted); font-size: 15px; margin: 0 0 4px; }
+  h2 { font-size: 21px; margin: 44px 0 14px; padding-bottom: 6px; border-bottom: 2px solid var(--line); }
+  h3 { font-size: 17px; margin: 0 0 4px; }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; font-size: 0.88em;
+         font-family: "SF Mono", Consolas, "Roboto Mono", monospace; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+          padding: 18px 20px; margin: 14px 0; box-shadow: 0 1px 2px rgba(0,0,0,.03); }
+  .rank { display: inline-flex; align-items: center; justify-content: center;
+          width: 26px; height: 26px; border-radius: 50%; background: var(--accent);
+          color: #fff; font-weight: 700; font-size: 14px; margin-right: 10px; flex: 0 0 auto; }
+  .card-head { display: flex; align-items: center; margin-bottom: 8px; }
+  .card-head h3 { margin: 0; }
+  .tags { margin-left: auto; font-size: 12px; color: var(--muted); }
+  .tag { background: var(--accent-soft); color: var(--accent); border-radius: 20px;
+         padding: 2px 9px; margin-left: 6px; white-space: nowrap; }
+  .field { margin: 8px 0; }
+  .field b { color: var(--muted); font-weight: 600; font-size: 13px; text-transform: uppercase;
+             letter-spacing: .4px; display: block; margin-bottom: 2px; }
+  ul { margin: 6px 0; padding-left: 22px; }
+  li { margin: 3px 0; }
+  .basis { font-size: 13px; color: var(--muted); }
+  .basis code { font-size: 0.85em; }
+  .rejected li { color: var(--muted); }
+  .rejected b { color: var(--ink); }
+  .diagram { background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+             padding: 20px; margin: 16px 0; overflow-x: auto; }
+  pre.ascii { font-family: "SF Mono", Consolas, monospace; font-size: 12.5px; line-height: 1.35;
+              color: var(--ink); margin: 0; white-space: pre; }
+  .meta { color: var(--muted); font-size: 13px; }
+  .grounding { background: #fff; border-left: 3px solid var(--accent); padding: 12px 16px;
+               border-radius: 0 8px 8px 0; font-size: 14px; }
+  .grounding li { margin: 4px 0; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>Searchable PDF — merging OCR JSON onto image PDFs</h1>
+  <p class="sub">Ideation · repo-grounded · <code>PyMuPDF</code></p>
+  <p class="sub">Generated 2026-07-28 · Subject: a PyMuPDF tool that overlays an invisible OCR text
+     layer (from Dynamics/Azure OCR JSON) onto an image-only PDF page to make it searchable.</p>
+</header>
+
+<section>
+  <h2>The problem in one line</h2>
+  <p>You have image-only PDF pages (<code>page_005.pdf</code>) and matching OCR results as JSON
+  (<code>page_005_formatted.json</code>) with <b>line-level</b> text and <b>normalized (0–1)</b>
+  bounding boxes. You want <code>final_page_005.pdf</code>: the same image, plus an
+  <i>invisible, selectable, searchable</i> text layer aligned to the page.</p>
+</section>
+
+<section>
+  <h2>Grounding context</h2>
+  <div class="grounding">
+    <ul>
+      <li><b>JSON shape</b> (<code>page_005_formatted.json</code>): Dynamics CRM <code>expando</code>
+      wrapper → top-level array; each element has <code>page</code>, <code>fullPageText</code>, and
+      <code>lines[]</code>. Each line = <code>text</code> + <code>boundingBox</code>
+      (<code>left/top/width/height</code> as 0–1 fractions, top-left origin, plus a 4-point
+      <code>polygon</code>). <b>No word-level boxes.</b> 107 lines on page 5; OCR text is noisy
+      (e.g. "Salte / page"). Text includes non-ASCII (Österreich, prüfzeugnis).</li>
+      <li><b>Sibling files</b>: a whole <code>pages/</code> directory of <code>page_NNN.pdf</code> +
+      <code>page_NNN(_formatted).json</code> pairs — naming is inconsistent
+      (<code>page_001.json</code> vs <code>page_005_formatted.json</code>).</li>
+      <li><b>PyMuPDF capability</b>: <code>render_mode=3</code> emits <code>3 Tr</code> = invisible text
+      (confirmed <code>src/__init__.py:15524</code>). <code>TextWriter</code> (16905) +
+      <code>write_text(page, render_mode=3)</code> (17254) is the scalable path; supports opacity/color.
+      Python API uses <b>top-left origin</b> — matches Azure coords, no y-flip needed. <code>overlay=True</code>
+      keeps the image untouched.</li>
+      <li><b>Existing convention to mirror</b>: <code>scripts/pdf_splitter_cli.py</code> — argparse,
+      <code>SplitterError</code>, <code>--json</code> output, path validation, thread pool for I/O.</li>
+      <li><b>Topic axes</b>: (1) text-layer technique · (2) normalized→PDF coordinate mapping ·
+      (3) text-fit &amp; quality · (4) CLI &amp; batch integration · (5) robustness to schema/OCR variance.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>How the core approach works</h2>
+  <div class="diagram">
+<pre class="ascii">
+  OCR JSON (normalized, top-left)          PDF page (points, W×H)
+  ┌─────────────────────────────┐          ┌─────────────────────────────┐
+  │ line "Customer Name"        │          │  (scanned image, untouched)  │
+  │  left=0.021 top=0.012       │          │                              │
+  │  width=0.130 height=0.014   │  ──────► │  x  = left * W               │
+  │  text="Customer Name"       │  map     │  y0 = top  * H  (box top)    │
+  └─────────────────────────────┘          │  baseline = (top+height)*H   │
+                                            │  fontsize = height * H       │
+       for each of 107 lines               │  Tz = box_w / natural_w      │
+              │                             │                              │
+              ▼                             │  TextWriter.append(pt, text) │
+   TextWriter.write_text(page,             │        ▼                     │
+        render_mode=3)  ── 3 Tr ──►        │  invisible glyphs, selectable│
+                                            └─────────────────────────────┘
+   Result: final_page_005.pdf — image you SEE, text you SEARCH.
+</pre>
+  </div>
+  <p class="meta">Font sized from box <i>height</i>, then horizontally scaled so the invisible string
+  spans the box <i>width</i> — this makes selection/highlight track the printed image without needing
+  word boxes.</p>
+</section>
+
+<section>
+  <h2>Top candidates</h2>
+
+  <div class="card">
+    <div class="card-head"><span class="rank">1</span><h3>Invisible per-line text layer via <code>TextWriter</code></h3>
+      <span class="tags"><span class="tag">technique</span></span></div>
+    <div class="field"><b>Idea</b>For each OCR line, place its full text as one invisible run
+      (<code>render_mode=3</code>) at baseline = box bottom, <code>fontsize ≈ height*H</code>. Accumulate
+      all 107 lines in one <code>TextWriter</code> and emit once with <code>write_text(page, render_mode=3)</code>.
+      The image is preserved (<code>overlay=True</code>).</div>
+    <div class="field"><b>Why it wins</b>The canonical "OCR sandwich" used by Tesseract/OCRmyPDF.
+      One content stream, one <code>Tr 3</code>, scales to hundreds of lines. Selectable + searchable
+      with copy/paste fidelity.</div>
+    <div class="field"><b>Open question for brainstorm</b>Width-fit: adjust fontsize down vs. apply
+      horizontal scaling (<code>Tz</code>) so the run matches box width. TextWriter returns the cursor
+      so overflow is measurable.</div>
+    <p class="basis">Basis: <code>internal:src/__init__.py:16905,17254,15524</code> ·
+      <code>external:</code> OCRmyPDF glyphless-font renderer, PyMuPDF recipes-ocr.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><span class="rank">2</span><h3>Standalone CLI tool mirroring <code>pdf_splitter_cli.py</code></h3>
+      <span class="tags"><span class="tag">integration</span></span></div>
+    <div class="field"><b>Idea</b><code>scripts/ocr_merge_cli.py</code>: given a PDF + JSON, write
+      <code>final_&lt;name&gt;.pdf</code>. <code>OcrMergeError</code>, <code>--json</code> output,
+      path validation — same shape as the splitter. Add a <b>directory/batch mode</b> that pairs every
+      <code>page_NNN.pdf</code> with its JSON and produces all <code>final_*.pdf</code> in one run.</div>
+    <div class="field"><b>Why it wins</b>Fits the documented "standalone scripts, not part of the wheel"
+      pattern; Power-Automate-friendly JSON output; reuses the proven threaded I/O structure.</div>
+    <p class="basis">Basis: <code>internal:scripts/pdf_splitter_cli.py:1-279</code> · CLAUDE.md splitter tooling section.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><span class="rank">3</span><h3>Coordinate-mapping module (normalized → PDF points)</h3>
+      <span class="tags"><span class="tag">coord-map</span></span></div>
+    <div class="field"><b>Idea</b>A small pure-function core: <code>(norm_bbox, page.rect, page.rotation)
+      → insertion Point + fontsize</code>. Handles top-left origin (no flip), baseline offset, and
+      <code>/Rotate</code> pages via <code>derotation_matrix</code>. Independently unit-testable with
+      synthetic boxes — no PDF needed.</div>
+    <div class="field"><b>Why it wins</b>Isolates the one part most likely to be wrong (off-by-a-flip,
+      rotation) into testable pure code. Everything else composes around it.</div>
+    <p class="basis">Basis: <code>internal:src/__init__.py:15485,11141,13039</code> · external: Azure Read coord convention.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><span class="rank">4</span><h3>OCR-JSON schema adapter (Dynamics <code>expando</code> parser)</h3>
+      <span class="tags"><span class="tag">robustness</span></span></div>
+    <div class="field"><b>Idea</b>A tolerant loader that strips <code>@odata.type</code> noise, extracts
+      <code>lines[].text</code> + <code>boundingBox</code>, and normalizes the input regardless of
+      <code>page_NNN.json</code> vs <code>page_NNN_formatted.json</code> naming. Skips empty/whitespace
+      lines and clamps out-of-range coordinates.</div>
+    <div class="field"><b>Why it wins</b>Decouples the fragile vendor format from the rendering logic;
+      makes it trivial to support a second OCR source later. Guards against the real naming inconsistency
+      seen in <code>pages/</code>.</div>
+    <p class="basis">Basis: <code>internal:</code> observed JSON in <code>pages/*.json</code> · directory listing naming mismatch.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><span class="rank">5</span><h3>Unicode font embedding for non-ASCII OCR text</h3>
+      <span class="tags"><span class="tag">quality</span></span></div>
+    <div class="field"><b>Idea</b>Use a Unicode-capable embedded TTF in the <code>TextWriter</code> instead of
+      base-14 <code>helv</code>, so accented/German characters (Österreich, prüfzeugnis) copy/paste and
+      search correctly with a proper <code>ToUnicode</code> map. Fall back gracefully on glyphs the font lacks.</div>
+    <div class="field"><b>Why it wins</b>The sample data is literally full of non-ASCII; <code>helv</code>
+      would drop or mangle it, silently breaking search — the whole point of the feature.</div>
+    <p class="basis">Basis: <code>external:</code> ToUnicode/encoding gotchas (PyMuPDF textwriter, Azure Read).</p>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><span class="rank">6</span><h3>Visual QA / <code>--debug</code> overlay mode</h3>
+      <span class="tags"><span class="tag">quality</span><span class="tag">testability</span></span></div>
+    <div class="field"><b>Idea</b>A flag that renders the text <b>visibly</b> (<code>render_mode=0</code>, red,
+      semi-transparent) plus box outlines, so a human can eyeball alignment before trusting the invisible
+      layer. Also a golden-file test: extract text from <code>final_*.pdf</code> and assert coordinates land
+      within tolerance of the source boxes.</div>
+    <div class="field"><b>Why it wins</b>Alignment bugs are invisible by construction — mode 3 hides exactly
+      what you need to verify. Both scouts independently flagged "render visible first, then switch to 3."</div>
+    <p class="basis">Basis: <code>external:</code> both research agents' validation recommendation.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><span class="rank">7</span><h3>Word-level proportional distribution (stretch)</h3>
+      <span class="tags"><span class="tag">technique</span><span class="tag">stretch</span></span></div>
+    <div class="field"><b>Idea</b>Since the JSON has no word boxes, split each line into words and distribute
+      them across the line box by measured character advance — giving tighter per-word selection highlights.</div>
+    <div class="field"><b>Why it's a stretch, not a base</b>Line-level placement already yields full search;
+      per-word is a polish that adds real complexity. Build only if selection granularity matters.</div>
+    <p class="basis">Basis: <code>external:</code> line-vs-word tradeoff (research §2) · <code>internal:src/__init__.py:8502</code> (<code>Font.text_length</code>).</p>
+  </div>
+</section>
+
+<section>
+  <h2>Considered and rejected</h2>
+  <div class="card rejected">
+    <ul>
+      <li><b><code>insert_textbox</code> auto-fit per line</b> — layout-driven wrapping destroys the 1:1
+        line→position correspondence that makes selection track the image. The width-fit idea survives
+        (folded into candidate 1); the wrapping textbox does not.</li>
+      <li><b>Polygon / skew correction via <code>morph</code></b> — the sample boxes are near axis-aligned;
+        handling the 4-point polygon and page skew is real work for marginal gain. Defer past v1.</li>
+      <li><b><code>Pixmap.pdfocr_save()</code> (built-in Tesseract path)</b> — re-runs OCR and ignores your
+        existing Azure JSON. Wrong tool: you already paid for the OCR results.</li>
+      <li><b>Positioned <code>fullPageText</code> as the primary source</b> — it's one blob with no
+        per-line geometry; useful only as a last-resort "at least it's searchable" fallback, not a direction.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>Suggested next step</h2>
+  <p>Candidates 1–4 together form the natural v1 (invisible layer + CLI + coord map + schema adapter),
+  with 5 as a correctness must-have for this data and 6 as the way to trust it. A good handoff to
+  <code>ce-brainstorm</code> would be candidate&nbsp;1 (the layer technique) or the CLI shape — deciding
+  the width-fit strategy and the single-page-vs-batch surface precisely enough to plan.</p>
+</section>
+
+</main>
+</body>
+</html>
