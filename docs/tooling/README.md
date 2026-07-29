@@ -11,7 +11,11 @@ Standalone command-line tools in `scripts/` for splitting PDFs and making scanne
 
 ## Start here
 
-**New to these tools?** Follow the tutorial end to end:
+**First time here?** Open the self-contained HTML guide — no setup, opens in any browser:
+
+- [Getting Started guide (HTML)](getting-started.html)
+
+**Prefer a step-by-step walkthrough?** Follow the tutorial end to end:
 
 - [Tutorial: from a scanned PDF to searchable pages](tutorial-scan-to-searchable.md)
 

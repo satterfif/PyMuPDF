@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Getting Started — PDF Splitter & OCR Merge</title>
+<style>
+  :root {
+    --ink: #1a1c1f; --muted: #5b6470; --line: #e4e8ee; --accent: #2f6f4f;
+    --accent-soft: #eaf3ee; --bg: #f6f8fa; --card: #fff; --code-bg: #f0f2f5;
+    --warn-bg: #fff8e6; --warn-line: #e6c860; --ok: #2f6f4f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font: 16px/1.65 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink); background: var(--bg); margin: 0; padding: 0 20px 100px;
+  }
+  main { max-width: 820px; margin: 0 auto; }
+  header { padding: 48px 0 12px; border-bottom: 3px solid var(--accent); margin-bottom: 8px; }
+  h1 { font-size: 32px; line-height: 1.15; margin: 0 0 8px; letter-spacing: -0.5px; }
+  .lede { font-size: 17px; color: var(--muted); margin: 0; }
+  h2 {
+    font-size: 23px; margin: 44px 0 6px; padding-top: 8px;
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  h2 .num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; flex: 0 0 auto; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: 16px; font-weight: 700;
+  }
+  h3 { font-size: 18px; margin: 26px 0 6px; }
+  p { margin: 10px 0; }
+  code {
+    background: var(--code-bg); padding: 1.5px 6px; border-radius: 4px; font-size: 0.87em;
+    font-family: "SF Mono", Consolas, "Roboto Mono", monospace;
+  }
+  pre {
+    background: #1e2530; color: #e8edf2; padding: 14px 16px; border-radius: 8px;
+    overflow-x: auto; font-size: 13.5px; line-height: 1.5; margin: 12px 0;
+    font-family: "SF Mono", Consolas, "Roboto Mono", monospace;
+  }
+  pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+  pre .cmt { color: #8a97a8; }
+  pre .out { color: #9fd3b0; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 20px 24px; margin: 18px 0; box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  }
+  .tool-tag {
+    display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .5px;
+    text-transform: uppercase; color: var(--accent); background: var(--accent-soft);
+    padding: 3px 10px; border-radius: 20px; margin-bottom: 4px;
+  }
+  .note {
+    background: var(--warn-bg); border-left: 4px solid var(--warn-line);
+    padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; font-size: 15px;
+  }
+  .note strong { color: #7a5c00; }
+  .step { font-weight: 600; color: var(--accent); }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14.5px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: .4px; }
+  td code { white-space: nowrap; }
+  .check { color: var(--ok); font-weight: 700; }
+  ul { margin: 10px 0; padding-left: 22px; }
+  li { margin: 5px 0; }
+  a { color: var(--accent); }
+  .toc { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 24px; margin: 20px 0; }
+  .toc ol { margin: 6px 0 0; padding-left: 22px; }
+  .toc li { margin: 4px 0; }
+  footer { margin-top: 60px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+  .kbd { font-family: monospace; background: #eceff3; border: 1px solid #d3d9e0; border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; font-size: 0.85em; }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <h1>Getting Started</h1>
+  <p class="lede">Two command-line tools for scanned PDFs — split a PDF into pages, and make a scanned page searchable. Written for your first time using them.</p>
+</header>
+
+<div class="toc">
+  <strong>On this page</strong>
+  <ol>
+    <li><a href="#need">What you need first</a></li>
+    <li><a href="#split">Tool 1 — Split a PDF into pages</a></li>
+    <li><a href="#ocr">Tool 2 — Make a scanned page searchable</a></li>
+    <li><a href="#together">Using both together</a></li>
+    <li><a href="#trouble">When something goes wrong</a></li>
+  </ol>
+</div>
+
+<p>These two tools do one job each, and they're often used together:</p>
+<ul>
+  <li><strong>PDF Splitter</strong> — takes one PDF and breaks it into single-page PDFs (or pulls out just the pages you want).</li>
+  <li><strong>OCR Merge</strong> — takes a scanned (image-only) page plus its OCR text, and produces a copy you can search and copy text from. It looks identical; it's just no longer "just a picture."</li>
+</ul>
+<p>You run them by typing a command in a terminal. Don't worry if that's new — every command you need is written out below, ready to copy.</p>
+
+<h2 id="need"><span class="num">1</span> What you need first</h2>
+
+<div class="card">
+<p>Both tools need <strong>Python</strong> (version 3.10 or newer) with the <strong>PyMuPDF</strong> library available. To check whether you're ready, open a terminal in the project folder and run:</p>
+<pre><code>python -c "import pymupdf; print('ready')"</code></pre>
+<p>If it prints <code>ready</code>, you're set. If it says <code>No module named 'pymupdf'</code>, install it first:</p>
+<pre><code>pip install pymupdf</code></pre>
+<p class="note"><strong>Tip:</strong> Run all the commands on this page from the top folder of the project (the one that contains the <code>scripts</code> folder). If a command can't find a file, that's the usual reason — check which folder your terminal is in.</p>
+</div>
+
+<h2 id="split"><span class="num">2</span> Split a PDF into pages</h2>
+<span class="tool-tag">scripts/pdf_splitter_cli.py</span>
+
+<p>Say you have <code>Invoices.pdf</code> and you want each page as its own file.</p>
+
+<h3><span class="step">Step 1.</span> Run the splitter</h3>
+<pre><code>python scripts/pdf_splitter_cli.py "Invoices.pdf"</code></pre>
+
+<h3><span class="step">Step 2.</span> Find your pages</h3>
+<p>The tool creates a folder named after your PDF, with a <code>pages</code> folder inside it:</p>
+<pre><code><span class="out">Invoices/pages/page_001.pdf
+Invoices/pages/page_002.pdf
+Invoices/pages/page_003.pdf
+...</span></code></pre>
+<p>That's it. One file per page, numbered in order.</p>
+
+<h3>Common variations</h3>
+<table>
+  <tr><th>You want…</th><th>Command</th></tr>
+  <tr>
+    <td>Pages saved to a specific folder</td>
+    <td><code>python scripts/pdf_splitter_cli.py "Invoices.pdf" --output-dir "C:/Output"</code></td>
+  </tr>
+  <tr>
+    <td>Only certain pages, as one file</td>
+    <td><code>python scripts/pdf_splitter_cli.py "Report.pdf" --pages "1-5, 8, 10-15"</code></td>
+  </tr>
+</table>
+<p>With <code>--pages</code>, you get a single file named <code>Report_pages.pdf</code> holding just those pages (here: 1 through 5, 8, and 10 through 15). Page numbers start at 1.</p>
+
+<p class="note"><strong>Good to know:</strong> the splitter won't overwrite your original — it only writes new files. If output files with the same names already exist, they're replaced.</p>
+
+<h2 id="ocr"><span class="num">3</span> Make a scanned page searchable</h2>
+<span class="tool-tag">scripts/ocr_merge_cli.py</span>
+
+<p>A scanned page is really just a picture of text — you can't select or search it. If you already have the OCR results for that page (as a JSON file), this tool merges them back onto the page so you can search and copy.</p>
+
+<p class="note"><strong>Before you start:</strong> this tool does <em>not</em> do the OCR itself. It expects you already have the OCR text as a JSON file (the kind Microsoft Dynamics / Azure produces) next to your PDF. If you don't have that JSON yet, that step happens before this tool.</p>
+
+<h3><span class="step">Step 1.</span> Run the merge</h3>
+<p>Give it the scanned page and its matching JSON:</p>
+<pre><code>python scripts/ocr_merge_cli.py page_005.pdf page_005_formatted.json</code></pre>
+
+<h3><span class="step">Step 2.</span> Open the result</h3>
+<p>You get a new file, <code>final_page_005.pdf</code>, right next to the original. It looks exactly the same — but now open it in any PDF viewer, press <span class="kbd">Ctrl</span>+<span class="kbd">F</span>, and search for a word you can see on the page. It gets found and highlighted.</p>
+<pre><code><span class="out">Wrote searchable PDF: .../final_page_005.pdf</span></code></pre>
+
+<h3>Common variations</h3>
+<table>
+  <tr><th>You want…</th><th>Command</th></tr>
+  <tr>
+    <td>Output in a specific folder</td>
+    <td><code>python scripts/ocr_merge_cli.py page_005.pdf page_005_formatted.json --output-dir "C:/searchable"</code></td>
+  </tr>
+  <tr>
+    <td>To pick the font used</td>
+    <td><code>python scripts/ocr_merge_cli.py page_005.pdf page_005_formatted.json --font "C:/Windows/Fonts/segoeui.ttf"</code></td>
+  </tr>
+</table>
+
+<p class="note"><strong>Why the font matters:</strong> the tool embeds a font so accented and non-English text (like "Österreich") stays searchable. It uses a system font automatically. Only pass <code>--font</code> if it tells you it couldn't find one.</p>
+
+<h2 id="together"><span class="num">4</span> Using both together</h2>
+
+<div class="card">
+<p>The common real-world flow: you have one big scanned PDF and want every page searchable. Split first, then merge each page.</p>
+
+<p><span class="step">1.</span> Split the scan into pages:</p>
+<pre><code>python scripts/pdf_splitter_cli.py scanned.pdf</code></pre>
+
+<p><span class="step">2.</span> Merge each page with its OCR JSON. On Windows PowerShell or a Bash shell you can loop; here's Bash:</p>
+<pre><code><span class="cmt"># for every page, merge its matching _formatted.json if it exists</span>
+for pdf in scanned/pages/page_*.pdf; do
+  json="${pdf%.pdf}_formatted.json"
+  [ -f "$json" ] && python scripts/ocr_merge_cli.py "$pdf" "$json"
+done</code></pre>
+
+<p>Each page becomes a <code>final_page_NNN.pdf</code> you can search. <span class="check">Done.</span></p>
+</div>
+
+<h2 id="trouble"><span class="num">5</span> When something goes wrong</h2>
+
+<p>Both tools tell you plainly what happened. Here are the messages you're most likely to see the first time, and what to do.</p>
+
+<h3>PDF Splitter</h3>
+<table>
+  <tr><th>Message</th><th>What it means / fix</th></tr>
+  <tr><td><code>Input PDF does not exist</code></td><td>The path is wrong. Check spelling; wrap paths with spaces in quotes.</td></tr>
+  <tr><td><code>Input file must be a PDF</code></td><td>You pointed it at something that isn't a <code>.pdf</code>.</td></tr>
+  <tr><td><code>Password-protected PDF is not supported</code></td><td>Remove the password in a PDF viewer first, then split.</td></tr>
+  <tr><td><code>... out of range</code></td><td>Your <code>--pages</code> asked for a page the document doesn't have. Use numbers within the page count.</td></tr>
+</table>
+
+<h3>OCR Merge</h3>
+<table>
+  <tr><th>Message</th><th>What it means / fix</th></tr>
+  <tr><td><code>PDF already contains a text layer</code></td><td>That page is already searchable — you don't need to merge it.</td></tr>
+  <tr><td><code>Invalid OCR JSON: ...</code></td><td>The JSON isn't the expected shape. Confirm it's the OCR export for that exact page.</td></tr>
+  <tr><td><code>... is outside the normalized 0-1 range</code></td><td>The JSON coordinates aren't normalized as expected — check your OCR export settings.</td></tr>
+  <tr><td><code>No Unicode-capable TTF font found</code></td><td>Add <code>--font</code> pointing at a <code>.ttf</code> file (e.g. a Windows font).</td></tr>
+  <tr><td>Text is searchable but some words look garbled</td><td>That's the OCR quality, not a bug. The tool places whatever text the OCR produced.</td></tr>
+</table>
+
+<p class="note"><strong>For automation:</strong> both tools exit with code <code>0</code> on success and a non-zero code on failure, so a tool like Power Automate Desktop can tell success from failure automatically. The splitter also supports <code>--json</code> for a machine-readable result.</p>
+
+<footer>
+  <p>Want more detail? See the full documentation in <code>docs/tooling/</code>:
+  the <a href="tutorial-scan-to-searchable.md">step-by-step tutorial</a>,
+  the reference pages for the <a href="reference-pdf-splitter-cli.md">splitter</a> and
+  <a href="reference-ocr-merge-cli.md">OCR merge</a> tools,
+  and <a href="explanation-design.md">why they're built this way</a>.</p>
+</footer>
+
+</main>
+</body>
+</html>
